@@ -111,14 +111,12 @@ impl SerializeAndDeserialize for AnonymousParameter {
     }
 }
 
-#[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
 fn parse_space(input: Input) -> Res<Input> {
     take_while_m_n(1, 1, |c| c == ' ')
         .context("checking whitespace delimiter")
         .parse(input)
 }
 
-#[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
 fn parse_indents(input: Input, indents: usize) -> Res<Input> {
     let spaces = indents * INDENT_SPACES;
     take_while_m_n(spaces, spaces, |c| c == ' ')
@@ -126,7 +124,6 @@ fn parse_indents(input: Input, indents: usize) -> Res<Input> {
         .parse(input)
 }
 
-#[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
 fn parse_newline(input: Input) -> Res<Input> {
     tag("\r\n").context("parsing newline").parse(input)
 }
@@ -147,7 +144,6 @@ fn parse_string(input: Input) -> Res<String> {
         .parse(input)
 }
 
-#[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
 fn parse_float(input: Input) -> Res<Float> {
     take_while(|v: char| !v.is_whitespace())
         .map_res(|v: Input| v.parse::<f32>())
@@ -157,7 +153,6 @@ fn parse_float(input: Input) -> Res<Float> {
     // .map_err(Into::into).map(OrderedFloat)
 }
 
-#[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
 fn parse_int(input: Input) -> Res<i64> {
     take_while(|v: char| !v.is_whitespace())
         .map_res(|v: Input| v.parse::<i64>())
@@ -406,33 +401,50 @@ mod tests {
     const EXAMPLE_1: &str = include_str!("../test_data/barbarah-anne.rpp");
 
     #[test]
+    fn test_single_param_object() -> Result<()> {
+        let example = "<METRONOME 6 2\r\n  VOL 0.25 0.125\r\n  >";
+        Object::deserialize(example, 0).map_err(|e| eyre!("{e:#?}"))?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_two_param_object() -> Result<()> {
+        let example = "<METRONOME 6 2\r\n  VOL 0.25 0.125\r\n  FREQ 800 1600 1\r\n  >";
+        Object::deserialize(example, 0).map_err(|e| eyre!("{e:#?}"))?;
+
+        Ok(())
+    }
+    #[test]
     fn test_bigger_object() -> Result<()> {
-        let example = "<METRONOME 6 2\r\n    VOL 0.25 0.125\r\n    FREQ 800 1600 1\r\n    BEATLEN 4\r\n    SAMPLES \"\" \"\"\r\n    PATTERN 2863311530 2863311529\r\n    MULT 1\r\n  >\r\n";
-        Object::deserialize(example, 0)?;
+        let example = "<METRONOME 6 2\r\n  VOL 0.25 0.125\r\n  FREQ 800 1600 1\r\n  BEATLEN 4\r\n  SAMPLES \"\" \"\"\r\n  PATTERN 2863311530 2863311529\r\n  MULT 1\r\n  >";
+        Object::deserialize(example, 0).map_err(|e| eyre!("{e:#?}"))?;
 
         Ok(())
     }
 
     #[test]
     fn test_line() -> Result<()> {
-        Line::deserialize("GROUPOVERRIDE 0 0 0", 0)?;
+        Line::deserialize("GROUPOVERRIDE 0 0 0", 0).map_err(|e| eyre!("{e:#?}"))?;
         Ok(())
     }
     #[test]
     fn test_entry() -> Result<()> {
-        Entry::deserialize("GROUPOVERRIDE 0 0 0\r\n", 0)?;
+        Entry::deserialize("GROUPOVERRIDE 0 0 0\r\n", 0).map_err(|e| eyre!("{e:#?}"))?;
         Ok(())
     }
     #[test]
     fn test_empty_object() -> Result<()> {
-        Object::deserialize("<EMPTY\r\n  >", 0).map_err(|e| eyre!("{e:#?}"))?;
+        Object::deserialize("<EMPTY\r\n  >", 0)
+            .map_err(|e| eyre!("{e:#?}"))
+            .map_err(|e| eyre!("{e:#?}"))?;
         Ok(())
     }
 
     #[test]
     fn test_string() -> Result<()> {
         let input = "<REAPER_PROJECT 0.1 \"6.80/linux-x86_64\" 1691227194\r\n  >";
-        Object::deserialize(input, 0)?;
+        Object::deserialize(input, 0).map_err(|e| eyre!("{e:#?}"))?;
         Ok(())
     }
 
@@ -443,18 +455,19 @@ mod tests {
     }
     #[test]
     fn test_hash_anonymous_parameter() -> Result<()> {
-        AnonymousParameter::deserialize("ZXZhdxgAAQ==", 0)?;
+        AnonymousParameter::deserialize("ZXZhdxgAAQ==", 0).map_err(|e| eyre!("{e:#?}"))?;
         Ok(())
     }
     #[test]
     fn test_record_cfg() -> Result<()> {
-        Object::deserialize("<RENDER_CFG\r\n  ZXZhdxgAAQ==\r\n  >", 0)?;
+        Object::deserialize("<RENDER_CFG\r\n  ZXZhdxgAAQ==\r\n  >", 0)
+            .map_err(|e| eyre!("{e:#?}"))?;
         Ok(())
     }
 
     #[test]
     fn test_example_document_parses() -> Result<()> {
-        let (_, object) = Object::deserialize(EXAMPLE_1, 0)?;
+        let (_, object) = Object::deserialize(EXAMPLE_1, 0).map_err(|e| eyre!("{e:#?}"))?;
         println!("{object:#?}");
         Ok(())
     }
