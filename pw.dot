@@ -1,0 +1,356 @@
+digraph pipewire {
+link_158 [shape=box style=filled fillcolor=lightblue];
+link_158 [label="link_id: 158\loutput_node_id: 289\linput_node_id: 291\loutput_port_id: 217\linput_port_id: 287\lstate: init\l"];
+port_217 -> link_158 -> port_287;
+link_216 [shape=box style=filled fillcolor=lightblue];
+link_216 [label="link_id: 216\loutput_node_id: 289\linput_node_id: 291\loutput_port_id: 307\linput_port_id: 328\lstate: init\l"];
+port_307 -> link_216 -> port_328;
+subgraph cluster_node_286 {
+bgcolor=palegreen;
+label="node_id: 286\lname: alsa_input.usb-Soundcraft_Soundcraft_Ui24-00.multichannel-input\lmedia_class: Audio/Source\l"
+port_322 [shape=box style=filled fillcolor=lightcoral];
+port_322 [label="port_id: 322\lname: capture_AUX31\ldirection: output\l"];
+port_302 [shape=box style=filled fillcolor=lightcoral];
+port_302 [label="port_id: 302\lname: capture_AUX30\ldirection: output\l"];
+port_188 [shape=box style=filled fillcolor=lightcoral];
+port_188 [label="port_id: 188\lname: capture_AUX29\ldirection: output\l"];
+port_182 [shape=box style=filled fillcolor=lightcoral];
+port_182 [label="port_id: 182\lname: capture_AUX28\ldirection: output\l"];
+port_214 [shape=box style=filled fillcolor=lightcoral];
+port_214 [label="port_id: 214\lname: capture_AUX27\ldirection: output\l"];
+port_167 [shape=box style=filled fillcolor=lightcoral];
+port_167 [label="port_id: 167\lname: capture_AUX26\ldirection: output\l"];
+port_187 [shape=box style=filled fillcolor=lightcoral];
+port_187 [label="port_id: 187\lname: capture_AUX25\ldirection: output\l"];
+port_180 [shape=box style=filled fillcolor=lightcoral];
+port_180 [label="port_id: 180\lname: capture_AUX24\ldirection: output\l"];
+port_269 [shape=box style=filled fillcolor=lightcoral];
+port_269 [label="port_id: 269\lname: capture_AUX23\ldirection: output\l"];
+port_285 [shape=box style=filled fillcolor=lightcoral];
+port_285 [label="port_id: 285\lname: capture_AUX22\ldirection: output\l"];
+port_186 [shape=box style=filled fillcolor=lightcoral];
+port_186 [label="port_id: 186\lname: capture_AUX21\ldirection: output\l"];
+port_166 [shape=box style=filled fillcolor=lightcoral];
+port_166 [label="port_id: 166\lname: capture_AUX20\ldirection: output\l"];
+port_320 [shape=box style=filled fillcolor=lightcoral];
+port_320 [label="port_id: 320\lname: capture_AUX19\ldirection: output\l"];
+port_316 [shape=box style=filled fillcolor=lightcoral];
+port_316 [label="port_id: 316\lname: capture_AUX18\ldirection: output\l"];
+port_185 [shape=box style=filled fillcolor=lightcoral];
+port_185 [label="port_id: 185\lname: capture_AUX17\ldirection: output\l"];
+port_174 [shape=box style=filled fillcolor=lightcoral];
+port_174 [label="port_id: 174\lname: capture_AUX16\ldirection: output\l"];
+port_210 [shape=box style=filled fillcolor=lightcoral];
+port_210 [label="port_id: 210\lname: capture_AUX15\ldirection: output\l"];
+port_268 [shape=box style=filled fillcolor=lightcoral];
+port_268 [label="port_id: 268\lname: capture_AUX14\ldirection: output\l"];
+port_184 [shape=box style=filled fillcolor=lightcoral];
+port_184 [label="port_id: 184\lname: capture_AUX13\ldirection: output\l"];
+port_171 [shape=box style=filled fillcolor=lightcoral];
+port_171 [label="port_id: 171\lname: capture_AUX12\ldirection: output\l"];
+port_297 [shape=box style=filled fillcolor=lightcoral];
+port_297 [label="port_id: 297\lname: capture_AUX11\ldirection: output\l"];
+port_163 [shape=box style=filled fillcolor=lightcoral];
+port_163 [label="port_id: 163\lname: capture_AUX10\ldirection: output\l"];
+port_183 [shape=box style=filled fillcolor=lightcoral];
+port_183 [label="port_id: 183\lname: capture_AUX9\ldirection: output\l"];
+port_156 [shape=box style=filled fillcolor=lightcoral];
+port_156 [label="port_id: 156\lname: capture_AUX8\ldirection: output\l"];
+port_162 [shape=box style=filled fillcolor=lightcoral];
+port_162 [label="port_id: 162\lname: capture_AUX7\ldirection: output\l"];
+port_172 [shape=box style=filled fillcolor=lightcoral];
+port_172 [label="port_id: 172\lname: capture_AUX6\ldirection: output\l"];
+port_154 [shape=box style=filled fillcolor=lightcoral];
+port_154 [label="port_id: 154\lname: capture_AUX5\ldirection: output\l"];
+port_87 [shape=box style=filled fillcolor=lightcoral];
+port_87 [label="port_id: 87\lname: capture_AUX4\ldirection: output\l"];
+port_247 [shape=box style=filled fillcolor=lightcoral];
+port_247 [label="port_id: 247\lname: capture_AUX3\ldirection: output\l"];
+port_150 [shape=box style=filled fillcolor=lightcoral];
+port_150 [label="port_id: 150\lname: capture_AUX2\ldirection: output\l"];
+port_168 [shape=box style=filled fillcolor=lightcoral];
+port_168 [label="port_id: 168\lname: capture_AUX1\ldirection: output\l"];
+port_146 [shape=box style=filled fillcolor=lightcoral];
+port_146 [label="port_id: 146\lname: capture_AUX0\ldirection: output\l"];
+}
+subgraph cluster_node_291 {
+bgcolor=palegreen;
+label="node_id: 291\lname: alsa_output.usb-Soundcraft_Soundcraft_Ui24-00.multichannel-output\lmedia_class: Audio/Sink\l"
+port_257 [shape=box style=filled fillcolor=lightcoral];
+port_257 [label="port_id: 257\lname: monitor_AUX31\ldirection: output\l"];
+port_142 [shape=box style=filled fillcolor=lightslateblue];
+port_142 [label="port_id: 142\lname: playback_AUX31\ldirection: input\l"];
+port_175 [shape=box style=filled fillcolor=lightcoral];
+port_175 [label="port_id: 175\lname: monitor_AUX30\ldirection: output\l"];
+port_138 [shape=box style=filled fillcolor=lightslateblue];
+port_138 [label="port_id: 138\lname: playback_AUX30\ldirection: input\l"];
+port_176 [shape=box style=filled fillcolor=lightcoral];
+port_176 [label="port_id: 176\lname: monitor_AUX29\ldirection: output\l"];
+port_134 [shape=box style=filled fillcolor=lightslateblue];
+port_134 [label="port_id: 134\lname: playback_AUX29\ldirection: input\l"];
+port_181 [shape=box style=filled fillcolor=lightcoral];
+port_181 [label="port_id: 181\lname: monitor_AUX28\ldirection: output\l"];
+port_130 [shape=box style=filled fillcolor=lightslateblue];
+port_130 [label="port_id: 130\lname: playback_AUX28\ldirection: input\l"];
+port_63 [shape=box style=filled fillcolor=lightcoral];
+port_63 [label="port_id: 63\lname: monitor_AUX27\ldirection: output\l"];
+port_126 [shape=box style=filled fillcolor=lightslateblue];
+port_126 [label="port_id: 126\lname: playback_AUX27\ldirection: input\l"];
+port_177 [shape=box style=filled fillcolor=lightcoral];
+port_177 [label="port_id: 177\lname: monitor_AUX26\ldirection: output\l"];
+port_122 [shape=box style=filled fillcolor=lightslateblue];
+port_122 [label="port_id: 122\lname: playback_AUX26\ldirection: input\l"];
+port_253 [shape=box style=filled fillcolor=lightcoral];
+port_253 [label="port_id: 253\lname: monitor_AUX25\ldirection: output\l"];
+port_118 [shape=box style=filled fillcolor=lightslateblue];
+port_118 [label="port_id: 118\lname: playback_AUX25\ldirection: input\l"];
+port_114 [shape=box style=filled fillcolor=lightcoral];
+port_114 [label="port_id: 114\lname: monitor_AUX24\ldirection: output\l"];
+port_110 [shape=box style=filled fillcolor=lightslateblue];
+port_110 [label="port_id: 110\lname: playback_AUX24\ldirection: input\l"];
+port_106 [shape=box style=filled fillcolor=lightcoral];
+port_106 [label="port_id: 106\lname: monitor_AUX23\ldirection: output\l"];
+port_102 [shape=box style=filled fillcolor=lightslateblue];
+port_102 [label="port_id: 102\lname: playback_AUX23\ldirection: input\l"];
+port_161 [shape=box style=filled fillcolor=lightcoral];
+port_161 [label="port_id: 161\lname: monitor_AUX22\ldirection: output\l"];
+port_157 [shape=box style=filled fillcolor=lightslateblue];
+port_157 [label="port_id: 157\lname: playback_AUX22\ldirection: input\l"];
+port_153 [shape=box style=filled fillcolor=lightcoral];
+port_153 [label="port_id: 153\lname: monitor_AUX21\ldirection: output\l"];
+port_149 [shape=box style=filled fillcolor=lightslateblue];
+port_149 [label="port_id: 149\lname: playback_AUX21\ldirection: input\l"];
+port_145 [shape=box style=filled fillcolor=lightcoral];
+port_145 [label="port_id: 145\lname: monitor_AUX20\ldirection: output\l"];
+port_141 [shape=box style=filled fillcolor=lightslateblue];
+port_141 [label="port_id: 141\lname: playback_AUX20\ldirection: input\l"];
+port_137 [shape=box style=filled fillcolor=lightcoral];
+port_137 [label="port_id: 137\lname: monitor_AUX19\ldirection: output\l"];
+port_133 [shape=box style=filled fillcolor=lightslateblue];
+port_133 [label="port_id: 133\lname: playback_AUX19\ldirection: input\l"];
+port_129 [shape=box style=filled fillcolor=lightcoral];
+port_129 [label="port_id: 129\lname: monitor_AUX18\ldirection: output\l"];
+port_125 [shape=box style=filled fillcolor=lightslateblue];
+port_125 [label="port_id: 125\lname: playback_AUX18\ldirection: input\l"];
+port_121 [shape=box style=filled fillcolor=lightcoral];
+port_121 [label="port_id: 121\lname: monitor_AUX17\ldirection: output\l"];
+port_117 [shape=box style=filled fillcolor=lightslateblue];
+port_117 [label="port_id: 117\lname: playback_AUX17\ldirection: input\l"];
+port_115 [shape=box style=filled fillcolor=lightcoral];
+port_115 [label="port_id: 115\lname: monitor_AUX16\ldirection: output\l"];
+port_113 [shape=box style=filled fillcolor=lightslateblue];
+port_113 [label="port_id: 113\lname: playback_AUX16\ldirection: input\l"];
+port_111 [shape=box style=filled fillcolor=lightcoral];
+port_111 [label="port_id: 111\lname: monitor_AUX15\ldirection: output\l"];
+port_109 [shape=box style=filled fillcolor=lightslateblue];
+port_109 [label="port_id: 109\lname: playback_AUX15\ldirection: input\l"];
+port_107 [shape=box style=filled fillcolor=lightcoral];
+port_107 [label="port_id: 107\lname: monitor_AUX14\ldirection: output\l"];
+port_105 [shape=box style=filled fillcolor=lightslateblue];
+port_105 [label="port_id: 105\lname: playback_AUX14\ldirection: input\l"];
+port_152 [shape=box style=filled fillcolor=lightcoral];
+port_152 [label="port_id: 152\lname: monitor_AUX13\ldirection: output\l"];
+port_148 [shape=box style=filled fillcolor=lightslateblue];
+port_148 [label="port_id: 148\lname: playback_AUX13\ldirection: input\l"];
+port_144 [shape=box style=filled fillcolor=lightcoral];
+port_144 [label="port_id: 144\lname: monitor_AUX12\ldirection: output\l"];
+port_140 [shape=box style=filled fillcolor=lightslateblue];
+port_140 [label="port_id: 140\lname: playback_AUX12\ldirection: input\l"];
+port_136 [shape=box style=filled fillcolor=lightcoral];
+port_136 [label="port_id: 136\lname: monitor_AUX11\ldirection: output\l"];
+port_132 [shape=box style=filled fillcolor=lightslateblue];
+port_132 [label="port_id: 132\lname: playback_AUX11\ldirection: input\l"];
+port_128 [shape=box style=filled fillcolor=lightcoral];
+port_128 [label="port_id: 128\lname: monitor_AUX10\ldirection: output\l"];
+port_124 [shape=box style=filled fillcolor=lightslateblue];
+port_124 [label="port_id: 124\lname: playback_AUX10\ldirection: input\l"];
+port_120 [shape=box style=filled fillcolor=lightcoral];
+port_120 [label="port_id: 120\lname: monitor_AUX9\ldirection: output\l"];
+port_116 [shape=box style=filled fillcolor=lightslateblue];
+port_116 [label="port_id: 116\lname: playback_AUX9\ldirection: input\l"];
+port_112 [shape=box style=filled fillcolor=lightcoral];
+port_112 [label="port_id: 112\lname: monitor_AUX8\ldirection: output\l"];
+port_108 [shape=box style=filled fillcolor=lightslateblue];
+port_108 [label="port_id: 108\lname: playback_AUX8\ldirection: input\l"];
+port_104 [shape=box style=filled fillcolor=lightcoral];
+port_104 [label="port_id: 104\lname: monitor_AUX7\ldirection: output\l"];
+port_100 [shape=box style=filled fillcolor=lightslateblue];
+port_100 [label="port_id: 100\lname: playback_AUX7\ldirection: input\l"];
+port_159 [shape=box style=filled fillcolor=lightcoral];
+port_159 [label="port_id: 159\lname: monitor_AUX6\ldirection: output\l"];
+port_155 [shape=box style=filled fillcolor=lightslateblue];
+port_155 [label="port_id: 155\lname: playback_AUX6\ldirection: input\l"];
+port_151 [shape=box style=filled fillcolor=lightcoral];
+port_151 [label="port_id: 151\lname: monitor_AUX5\ldirection: output\l"];
+port_147 [shape=box style=filled fillcolor=lightslateblue];
+port_147 [label="port_id: 147\lname: playback_AUX5\ldirection: input\l"];
+port_143 [shape=box style=filled fillcolor=lightcoral];
+port_143 [label="port_id: 143\lname: monitor_AUX4\ldirection: output\l"];
+port_139 [shape=box style=filled fillcolor=lightslateblue];
+port_139 [label="port_id: 139\lname: playback_AUX4\ldirection: input\l"];
+port_135 [shape=box style=filled fillcolor=lightcoral];
+port_135 [label="port_id: 135\lname: monitor_AUX3\ldirection: output\l"];
+port_131 [shape=box style=filled fillcolor=lightslateblue];
+port_131 [label="port_id: 131\lname: playback_AUX3\ldirection: input\l"];
+port_127 [shape=box style=filled fillcolor=lightcoral];
+port_127 [label="port_id: 127\lname: monitor_AUX2\ldirection: output\l"];
+port_123 [shape=box style=filled fillcolor=lightslateblue];
+port_123 [label="port_id: 123\lname: playback_AUX2\ldirection: input\l"];
+port_119 [shape=box style=filled fillcolor=lightcoral];
+port_119 [label="port_id: 119\lname: monitor_AUX1\ldirection: output\l"];
+port_287 [shape=box style=filled fillcolor=lightslateblue];
+port_287 [label="port_id: 287\lname: playback_AUX1\ldirection: input\l"];
+port_265 [shape=box style=filled fillcolor=lightcoral];
+port_265 [label="port_id: 265\lname: monitor_AUX0\ldirection: output\l"];
+port_328 [shape=box style=filled fillcolor=lightslateblue];
+port_328 [label="port_id: 328\lname: playback_AUX0\ldirection: input\l"];
+}
+subgraph cluster_node_289 {
+bgcolor=palegreen;
+label="node_id: 289\lname: Firefox Developer Edition\lmedia_class: Stream/Output/Audio\l"
+port_217 [shape=box style=filled fillcolor=lightcoral];
+port_217 [label="port_id: 217\lname: output_FR\ldirection: output\l"];
+port_307 [shape=box style=filled fillcolor=lightcoral];
+port_307 [label="port_id: 307\lname: output_FL\ldirection: output\l"];
+}
+subgraph cluster_node_81 {
+bgcolor=palegreen;
+label="node_id: 81\lname: alsa_input.pci-0000_11_00.4.analog-stereo\lmedia_class: Audio/Source\l"
+port_202 [shape=box style=filled fillcolor=lightcoral];
+port_202 [label="port_id: 202\lname: capture_FR\ldirection: output\l"];
+port_201 [shape=box style=filled fillcolor=lightcoral];
+port_201 [label="port_id: 201\lname: capture_FL\ldirection: output\l"];
+}
+subgraph cluster_node_33 {
+bgcolor=palegreen;
+label="node_id: 33\lname: alsa_output.pci-0000_11_00.4.iec958-stereo\lmedia_class: Audio/Sink\l"
+port_200 [shape=box style=filled fillcolor=lightcoral];
+port_200 [label="port_id: 200\lname: monitor_FR\ldirection: output\l"];
+port_199 [shape=box style=filled fillcolor=lightslateblue];
+port_199 [label="port_id: 199\lname: playback_FR\ldirection: input\l"];
+port_198 [shape=box style=filled fillcolor=lightcoral];
+port_198 [label="port_id: 198\lname: monitor_FL\ldirection: output\l"];
+port_197 [shape=box style=filled fillcolor=lightslateblue];
+port_197 [label="port_id: 197\lname: playback_FL\ldirection: input\l"];
+}
+subgraph cluster_node_89 {
+bgcolor=palegreen;
+label="node_id: 89\lname: alsa_input.usb-ZOOM_Q2n-4K_Web_Cam_000C24065211-02.analog-stereo\lmedia_class: Audio/Source\l"
+port_196 [shape=box style=filled fillcolor=lightcoral];
+port_196 [label="port_id: 196\lname: capture_FR\ldirection: output\l"];
+port_195 [shape=box style=filled fillcolor=lightcoral];
+port_195 [label="port_id: 195\lname: capture_FL\ldirection: output\l"];
+}
+subgraph cluster_node_86 {
+bgcolor=palegreen;
+label="node_id: 86\lname: alsa_output.pci-0000_0f_00.1.hdmi-stereo\lmedia_class: Audio/Sink\l"
+port_98 [shape=box style=filled fillcolor=lightcoral];
+port_98 [label="port_id: 98\lname: monitor_FR\ldirection: output\l"];
+port_97 [shape=box style=filled fillcolor=lightslateblue];
+port_97 [label="port_id: 97\lname: playback_FR\ldirection: input\l"];
+port_96 [shape=box style=filled fillcolor=lightcoral];
+port_96 [label="port_id: 96\lname: monitor_FL\ldirection: output\l"];
+port_95 [shape=box style=filled fillcolor=lightslateblue];
+port_95 [label="port_id: 95\lname: playback_FL\ldirection: input\l"];
+}
+subgraph cluster_node_85 {
+bgcolor=palegreen;
+label="node_id: 85\lname: alsa_input.pci-0000_09_00.0.stereo-fallback\lmedia_class: Audio/Source\l"
+port_94 [shape=box style=filled fillcolor=lightcoral];
+port_94 [label="port_id: 94\lname: capture_FR\ldirection: output\l"];
+port_93 [shape=box style=filled fillcolor=lightcoral];
+port_93 [label="port_id: 93\lname: capture_FL\ldirection: output\l"];
+}
+subgraph cluster_node_84 {
+bgcolor=palegreen;
+label="node_id: 84\lname: alsa_input.pci-0000_08_00.0.stereo-fallback\lmedia_class: Audio/Source\l"
+port_92 [shape=box style=filled fillcolor=lightcoral];
+port_92 [label="port_id: 92\lname: capture_FR\ldirection: output\l"];
+port_91 [shape=box style=filled fillcolor=lightcoral];
+port_91 [label="port_id: 91\lname: capture_FL\ldirection: output\l"];
+}
+subgraph cluster_node_83 {
+bgcolor=palegreen;
+label="node_id: 83\lname: alsa_input.pci-0000_07_00.0.stereo-fallback\lmedia_class: Audio/Source\l"
+port_90 [shape=box style=filled fillcolor=lightcoral];
+port_90 [label="port_id: 90\lname: capture_FR\ldirection: output\l"];
+port_78 [shape=box style=filled fillcolor=lightcoral];
+port_78 [label="port_id: 78\lname: capture_FL\ldirection: output\l"];
+}
+subgraph cluster_node_82 {
+bgcolor=palegreen;
+label="node_id: 82\lname: alsa_input.pci-0000_06_00.0.stereo-fallback\lmedia_class: Audio/Source\l"
+port_80 [shape=box style=filled fillcolor=lightcoral];
+port_80 [label="port_id: 80\lname: capture_FR\ldirection: output\l"];
+port_79 [shape=box style=filled fillcolor=lightcoral];
+port_79 [label="port_id: 79\lname: capture_FL\ldirection: output\l"];
+}
+subgraph cluster_node_76 {
+bgcolor=palegreen;
+label="node_id: 76\lname: v4l2_input.pci-0000_11_00.3-usb-0_4_1.0\lmedia_class: Video/Source\l"
+port_77 [shape=box style=filled fillcolor=lightcoral];
+port_77 [label="port_id: 77\lname: capture_1\ldirection: output\l"];
+}
+subgraph cluster_node_74 {
+bgcolor=palegreen;
+label="node_id: 74\lname: v4l2_input.pci-0000_09_00.0\lmedia_class: Video/Source\l"
+port_75 [shape=box style=filled fillcolor=lightcoral];
+port_75 [label="port_id: 75\lname: capture_1\ldirection: output\l"];
+}
+subgraph cluster_node_72 {
+bgcolor=palegreen;
+label="node_id: 72\lname: v4l2_input.pci-0000_08_00.0\lmedia_class: Video/Source\l"
+port_73 [shape=box style=filled fillcolor=lightcoral];
+port_73 [label="port_id: 73\lname: capture_1\ldirection: output\l"];
+}
+subgraph cluster_node_70 {
+bgcolor=palegreen;
+label="node_id: 70\lname: v4l2_input.pci-0000_07_00.0\lmedia_class: Video/Source\l"
+port_71 [shape=box style=filled fillcolor=lightcoral];
+port_71 [label="port_id: 71\lname: capture_1\ldirection: output\l"];
+}
+subgraph cluster_node_68 {
+bgcolor=palegreen;
+label="node_id: 68\lname: v4l2_input.pci-0000_06_00.0\lmedia_class: Video/Source\l"
+port_69 [shape=box style=filled fillcolor=lightcoral];
+port_69 [label="port_id: 69\lname: capture_1\ldirection: output\l"];
+}
+subgraph cluster_node_66 {
+bgcolor=palegreen;
+label="node_id: 66\lname: libcamera_input.__SB_.PCI0.GP13.XHC0.RHUB.PRT4-4_1.0-1686_04bc\lmedia_class: Video/Source\l"
+port_67 [shape=box style=filled fillcolor=lightcoral];
+port_67 [label="port_id: 67\lname: capture_1\ldirection: output\l"];
+}
+subgraph cluster_node_37 {
+bgcolor=palegreen;
+label="node_id: 37\lname: Midi-Bridge\lmedia_class: Midi/Bridge\l"
+port_47 [shape=box style=filled fillcolor=lightcoral];
+port_47 [label="port_id: 47\lname: M-AUDIO Oxygen Pro 49 at usb-0000:0c:00-1-2- full speed:(capture_3) Oxygen Pro 49 Editor\ldirection: output\l"];
+port_46 [shape=box style=filled fillcolor=lightcoral];
+port_46 [label="port_id: 46\lname: M-AUDIO Oxygen Pro 49 at usb-0000:0c:00-1-2- full speed:(capture_2) Oxygen Pro 49 Mackie/HUI\ldirection: output\l"];
+port_45 [shape=box style=filled fillcolor=lightcoral];
+port_45 [label="port_id: 45\lname: M-AUDIO Oxygen Pro 49 at usb-0000:0c:00-1-2- full speed:(capture_1) Oxygen Pro 49 MIDI DIN\ldirection: output\l"];
+port_44 [shape=box style=filled fillcolor=lightcoral];
+port_44 [label="port_id: 44\lname: M-AUDIO Oxygen Pro 49 at usb-0000:0c:00-1-2- full speed:(capture_0) Oxygen Pro 49 USB MIDI\ldirection: output\l"];
+port_43 [shape=box style=filled fillcolor=lightcoral];
+port_43 [label="port_id: 43\lname: Midi Through:(capture_0) Midi Through Port-0\ldirection: output\l"];
+port_42 [shape=box style=filled fillcolor=lightslateblue];
+port_42 [label="port_id: 42\lname: M-AUDIO Oxygen Pro 49 at usb-0000:0c:00-1-2- full speed:(playback_3) Oxygen Pro 49 Editor\ldirection: input\l"];
+port_41 [shape=box style=filled fillcolor=lightslateblue];
+port_41 [label="port_id: 41\lname: M-AUDIO Oxygen Pro 49 at usb-0000:0c:00-1-2- full speed:(playback_2) Oxygen Pro 49 Mackie/HUI\ldirection: input\l"];
+port_40 [shape=box style=filled fillcolor=lightslateblue];
+port_40 [label="port_id: 40\lname: M-AUDIO Oxygen Pro 49 at usb-0000:0c:00-1-2- full speed:(playback_1) Oxygen Pro 49 MIDI DIN\ldirection: input\l"];
+port_39 [shape=box style=filled fillcolor=lightslateblue];
+port_39 [label="port_id: 39\lname: M-AUDIO Oxygen Pro 49 at usb-0000:0c:00-1-2- full speed:(playback_0) Oxygen Pro 49 USB MIDI\ldirection: input\l"];
+port_38 [shape=box style=filled fillcolor=lightslateblue];
+port_38 [label="port_id: 38\lname: Midi Through:(playback_0) Midi Through Port-0\ldirection: input\l"];
+}
+subgraph cluster_node_29 {
+bgcolor=palegreen;
+label="node_id: 29\lname: Freewheel-Driver\lmedia_class: (null)\l"
+}
+subgraph cluster_node_28 {
+bgcolor=palegreen;
+label="node_id: 28\lname: Dummy-Driver\lmedia_class: (null)\l"
+}
+}
