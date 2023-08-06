@@ -7,7 +7,7 @@ use nom::{
     IResult, Parser,
 };
 use nom_supreme::{error::ErrorTree, tag::complete::tag, ParserExt};
-use std::{any::type_name, fmt::Write, iter::once, ops::Deref};
+use std::{any::type_name, fmt::Write, iter::once};
 use tracing::instrument;
 
 pub mod error;
@@ -313,12 +313,10 @@ impl Object {
             })
             .and_then(|params| {
                 let params_count = params.len();
-                params
-                    .first_mut()
-                    .ok_or_else(|| self::error::Error::BadParamCount {
-                        expected: 1,
-                        found: params_count,
-                    })
+                params.first_mut().ok_or(self::error::Error::BadParamCount {
+                    expected: 1,
+                    found: params_count,
+                })
             })
     }
 }

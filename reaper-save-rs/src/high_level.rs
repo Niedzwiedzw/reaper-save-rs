@@ -127,7 +127,7 @@ impl Track {
             .find_map(|entry| {
                 entry
                     .as_line()
-                    .and_then(|line| line.attribute.as_ref().eq(NAME).then(|| &line.values))
+                    .and_then(|line| line.attribute.as_ref().eq(NAME).then_some(&line.values))
             })
             .and_then(|values| values.iter().next())
             .ok_or_else(|| error::Error::MissingAttribute {
