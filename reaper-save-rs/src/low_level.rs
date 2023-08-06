@@ -52,16 +52,38 @@ impl SerializeAndDeserialize for ReaperUid {
 pub struct Int(pub i64);
 
 #[derive(Debug, Clone, PartialEq, Eq, enum_as_inner::EnumAsInner)]
-pub enum EscapedString {
+pub enum ReaperString {
     SingleQuote(String),
     DoubleQuote(String),
+    Unquoted(String),
 }
 
-impl SerializeAndDeserialize for EscapedString {
+impl AsRef<String> for ReaperString {
+    fn as_ref(&self) -> &String {
+        match self {
+            ReaperString::SingleQuote(v)
+            | ReaperString::DoubleQuote(v)
+            | ReaperString::Unquoted(v) => v,
+        }
+    }
+}
+
+impl AsMut<String> for ReaperString {
+    fn as_mut(&mut self) -> &mut String {
+        match self {
+            ReaperString::SingleQuote(v)
+            | ReaperString::DoubleQuote(v)
+            | ReaperString::Unquoted(v) => v,
+        }
+    }
+}
+
+impl SerializeAndDeserialize for ReaperString {
     fn serialize<'out>(&self, out: Output<'out>, _: usize) -> error::Result<Output<'out>> {
         match self {
-            EscapedString::SingleQuote(v) => write!(out, "'{v}'"),
-            EscapedString::DoubleQuote(v) => write!(out, "\"{v}\""),
+            ReaperString::SingleQuote(v) => write!(out, "'{v}'"),
+            ReaperString::DoubleQuote(v) => write!(out, "\"{v}\""),
+            ReaperString::Unquoted(v) => write!(out, "{v}"),
         }
         .map_err(Into::into)
         .map(|_| out)
@@ -98,9 +120,8 @@ impl SerializeAndDeserialize for EscapedString {
 pub enum Attribute {
     ReaperUid(ReaperUid),
     Int(Int),
-    String(EscapedString),
+    String(ReaperString),
     Float(Float),
-    UnescapedString(UnescapedString),
     UNumber(Int),
 }
 
@@ -144,13 +165,10 @@ fn parse_newline(input: Input) -> Res<Input> {
         .parse(input)
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UnescapedString(pub String);
-
 #[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
-fn parse_unescaped_string(input: Input) -> Res<UnescapedString> {
+fn parse_unescaped_string(input: Input) -> Res<String> {
     take_while(|c: char| !c.is_whitespace())
-        .map(|v: Input| UnescapedString(v.to_owned()))
+        .map(|v: Input| v.to_owned())
         .context("reading string")
         .parse(input)
 }
@@ -185,7 +203,6 @@ impl SerializeAndDeserialize for Attribute {
             Attribute::String(v) => return v.serialize(out, 0),
             Attribute::Float(v) => write!(out, "{v}"),
             Attribute::Int(Int(v)) => write!(out, "{}", v),
-            Attribute::UnescapedString(UnescapedString(v)) => write!(out, r#"{v}"#),
             Attribute::UNumber(Int(v)) => write!(out, "{}:U", v),
         }
         .map_err(Into::into)
@@ -196,11 +213,11 @@ impl SerializeAndDeserialize for Attribute {
     fn deserialize(input: Input, _: usize) -> Res<Self> {
         alt((
             |v| ReaperUid::deserialize(v, 0).map(|(out, v)| (out, Self::ReaperUid(v))),
-            |v| EscapedString::deserialize(v, 0).map(|(out, v)| (out, Self::String(v))),
+            |v| ReaperString::deserialize(v, 0).map(|(out, v)| (out, Self::String(v))),
             parse_int.map(Self::Int),
             parse_float.map(Self::Float),
             parse_u_number.map(Self::UNumber),
-            parse_unescaped_string.map(Self::UnescapedString),
+            parse_unescaped_string.map(|v| Self::String(ReaperString::Unquoted(v))),
         ))
         .context(type_name::<Self>())
         .parse(input)
