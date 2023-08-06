@@ -135,7 +135,6 @@ impl SerializeAndDeserialize for AnonymousParameter {
         take_while1(|c: char| c.is_alphanumeric() || c == '=')
             .map(|v: Input| Self(v.to_owned()))
             .preceded_by(|input| parse_indents(input, indent))
-            // .terminated(peek(parse_newline))
             .context(type_name::<Self>())
             .parse(input)
     }
@@ -161,21 +160,12 @@ fn parse_newline(input: Input) -> Res<Input> {
         .parse(input)
 }
 
-// #[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
-// fn parse_newline_and_opt_whitespace(input: Input) -> Res<()> {
-//     parse_newlines
-//         .terminated(opt(parse_spaces))
-//         .map(|_| ())
-//         .parse(input)
-// }
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnescapedString(pub String);
 
 #[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
 fn parse_unescaped_string(input: Input) -> Res<UnescapedString> {
     take_while(|c: char| !c.is_whitespace())
-        // .terminated(peek(parse_newline))
         .map(|v: Input| UnescapedString(v.to_owned()))
         .context("reading string")
         .parse(input)
@@ -187,7 +177,6 @@ fn parse_float(input: Input) -> Res<Float> {
         .map(OrderedFloat)
         .context("reading float")
         .parse(input)
-    // .map_err(Into::into).map(OrderedFloat)
 }
 
 fn parse_int(input: Input) -> Res<Int> {
@@ -245,12 +234,6 @@ impl SerializeAndDeserialize for AttributeName {
     #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
     fn deserialize(input: Input, indent: usize) -> Res<Self> {
         take_while1(|c: char| (c.is_alphabetic() && c.is_uppercase()) || c.is_numeric() || c == '_')
-            // .preceded_by(
-            //     peek(take_while_m_n(1, 1, |c: char| {
-            //         c.is_alphabetic() && c.is_uppercase()
-            //     }))
-            //     .context("making sure first character is alphabetic"),
-            // )
             .map(|v: Input| AttributeName(v.to_owned()))
             .context(type_name::<Self>())
             .parse(input)
@@ -304,51 +287,6 @@ impl SerializeAndDeserialize for Line {
         .parse(input)
     }
 }
-
-// impl SerializeAndDeserialize for ObjectHeader {
-//     fn serialize<'out>(&self, out: Output<'out>, indent: usize) -> error::Result<Output<'out>> {
-//         write!(out, "<")
-//             .map_err(|source| write_error!(self, source))
-//             .and_then(|_| self.0.serialize(out, indent))?;
-//         Ok(out)
-//     }
-
-//     fn deserialize(input: Input) -> Res<Self> {
-
-//     }
-// }
-
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// pub enum ObjectValues {
-//     Entries(Vec<Entry>),
-// }
-
-// impl SerializeAndDeserialize for ObjectValues {
-//     fn serialize<'out>(&self, out: Output<'out>, indent: usize) -> error::Result<Output<'out>> {
-//         match self {
-//             ObjectValues::Entries(entries) => {
-//                 for entry in entries.iter() {
-//                     entry.serialize(out, indent + 1)?;
-//                 }
-//             }
-//         }
-//         writeln!(out, "");
-//         Ok(out)
-//     }
-
-//     #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
-//     fn deserialize(input: Input, indent: usize) -> Res<Self> {
-//         separated_list0(
-//             parse_newline,
-//             (|input| Entry::deserialize(input, indent))
-//                 .preceded_by(|input| parse_indents(input, indent)),
-//         )
-//         .context("separated list of entries")
-//         .map(Self::Entries)
-//         .context(type_name::<Self>())
-//         .parse(input)
-//     }
-// }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Object {
