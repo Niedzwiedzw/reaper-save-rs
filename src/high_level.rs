@@ -1,6 +1,6 @@
 use crate::low_level::{self, AttributeName, Entry, Object, SerializeAndDeserialize};
 use derive_more::{AsMut, AsRef};
-use itertools::Itertools;
+
 pub mod error;
 use error::Result;
 
@@ -56,7 +56,7 @@ pub struct ReaperProject {
 }
 
 impl ReaperProject {
-    pub fn from_str(input: &str) -> Result<Self> {
+    pub fn parse_from_str(input: &str) -> Result<Self> {
         low_level::from_str(input)
             .map_err(Into::into)
             .and_then(Self::from_object)
@@ -76,7 +76,7 @@ impl ReaperProject {
         let original_index_start = value_index()
             .find_map(|(index, entry)| entry.as_object().map(|_| index))
             .or_else(|| value_index().last().map(|(index, _)| index))
-            .ok_or_else(|| error::Error::EmptyProject)?;
+            .ok_or(error::Error::EmptyProject)?;
         let mut values = self.inner.values.clone();
         let popped_tracks = {
             values
@@ -130,7 +130,7 @@ mod tests {
 
     #[test]
     fn test_extract_tracks() -> Result<()> {
-        let reaper_project = ReaperProject::from_str(EXAMPLE_1)?;
+        let reaper_project = ReaperProject::parse_from_str(EXAMPLE_1)?;
         for (idx, track) in reaper_project.tracks().into_iter().enumerate() {
             println!("{}. {:?}", idx + 1, track);
         }
