@@ -26,12 +26,13 @@ enum Command {
 
 fn main() -> Result<()> {
     tracing_subscriber::fmt().init();
+    color_eyre::install().ok();
     let Cli { command } = Cli::parse();
     match command {
         Command::Validate { file_path } => std::fs::read_to_string(&file_path)
             .wrap_err("reading file from disk")
             .and_then(|text| ReaperProject::parse_from_str(&text).wrap_err("parsing file"))
-            .wrap_err_with(|| format!("reading [{}]", file_path.display()))
+            .wrap_err_with(|| format!("validating [{}]", file_path.display()))
             .map(|_| {
                 info!(?file_path, "OK");
             }),
