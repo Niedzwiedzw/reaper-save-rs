@@ -55,7 +55,7 @@ impl SerializeAndDeserialize for ReaperUid {
     fn deserialize(input: Input, indent: usize) -> Res<Self> {
         delimited(
             tag("{"),
-            take_while(|c: char| c.is_digit(16) || c == '-'),
+            take_while(|c: char| c.is_ascii_hexdigit() || c == '-'),
             tag("}"),
         )
         .map(|v: Input| ReaperUid(v.to_owned()))
@@ -361,13 +361,13 @@ impl SerializeAndDeserialize for Object {
         write_indent(out, indent)?;
         write!(out, "<")?;
         self.header.serialize(out, 0)?;
-        writeln!(out, "")?;
+        writeln!(out)?;
         for entry in self.values.iter() {
             entry.serialize(out, indent + 1)?;
-            writeln!(out, "")?;
+            writeln!(out)?;
         }
         write_indent(out, indent)?;
-        write!(out, ">");
+        write!(out, ">")?;
         Ok(out)
     }
 
