@@ -37,11 +37,8 @@ pub mod error {
             source: std::fmt::Error,
             value: String,
         },
-        #[error("Invalid float")]
-        ParseFloatError {
-            #[from]
-            source: ParseFloatError,
-        },
+        #[error("Failed to parse:\n{report}")]
+        ParseError { report: String },
     }
     pub type Result<T> = std::result::Result<T, Error>;
 }
@@ -49,10 +46,10 @@ type Input<'input> = &'input str;
 type Output<'output> = &'output mut String;
 type Res<'input, U> = IResult<Input<'input>, U, ErrorTree<Input<'input>>>;
 
-type Float = OrderedFloat<f32>;
+type Float = OrderedFloat<f64>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ReaperUid(String);
+pub struct ReaperUid(pub String);
 
 macro_rules! write_error {
     ($self:expr, $source:expr) => {
@@ -83,20 +80,63 @@ impl SerializeAndDeserialize for ReaperUid {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Int(i64);
+pub struct Int(pub i64);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum EscapedString {
+    SingleQuote(String),
+    DoubleQuote(String),
+}
+
+impl SerializeAndDeserialize for EscapedString {
+    fn serialize<'out>(&self, out: Output<'out>, _: usize) -> error::Result<Output<'out>> {
+        match self {
+            EscapedString::SingleQuote(v) => write!(out, "'{v}'"),
+            EscapedString::DoubleQuote(v) => write!(out, "\"{v}\""),
+        }
+        .map_err(|source| write_error!(self, source))
+        .map(|_| out)
+    }
+
+    fn deserialize(input: Input, _indent: usize) -> Res<Self> {
+        let contents = |quote: char| take_while(move |c: char| c != quote);
+        let quote = |quote: &'static str| {
+            delimited(
+                tag(quote),
+                contents(
+                    quote
+                        .chars()
+                        .next()
+                        .expect("programming error, quotes must be at least one char"),
+                ),
+                tag(quote),
+            )
+        };
+        alt((
+            quote("\"")
+                .map(|v: Input| v.to_owned())
+                .map(Self::DoubleQuote),
+            quote("'")
+                .map(|v: Input| v.to_owned())
+                .map(Self::SingleQuote),
+        ))
+        .context("reading string")
+        .parse(input)
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Attribute {
     ReaperUid(ReaperUid),
     Int(Int),
-    String(String),
+    String(EscapedString),
     Float(Float),
-    UnescapedString(String),
+    UnescapedString(UnescapedString),
     UNumber(Int),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AnonymousParameter(String);
+pub struct AnonymousParameter(pub String);
 
 impl SerializeAndDeserialize for AnonymousParameter {
     fn serialize<'out>(&self, out: Output<'out>, indent: usize) -> error::Result<Output<'out>> {
@@ -144,39 +184,21 @@ fn parse_newline(input: Input) -> Res<Input> {
 //         .parse(input)
 // }
 
-#[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
-fn parse_string(input: Input) -> Res<String> {
-    let contents = |quote: char| take_while(move |c: char| c != quote);
-    let quote = |quote: &'static str| {
-        delimited(
-            tag(quote),
-            contents(
-                quote
-                    .chars()
-                    .next()
-                    .expect("programming error, quotes must be at least one char"),
-            ),
-            tag(quote),
-        )
-    };
-    alt((quote("\""), quote("'")))
-        .map(|v: Input| v.to_owned())
-        .context("reading string")
-        .parse(input)
-}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnescapedString(pub String);
 
 #[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
-fn parse_unescaped_string(input: Input) -> Res<String> {
+fn parse_unescaped_string(input: Input) -> Res<UnescapedString> {
     take_while(|c: char| !c.is_whitespace())
         // .terminated(peek(parse_newline))
-        .map(|v: Input| v.to_owned())
+        .map(|v: Input| UnescapedString(v.to_owned()))
         .context("reading string")
         .parse(input)
 }
 
 fn parse_float(input: Input) -> Res<Float> {
     take_while(|v: char| !v.is_whitespace())
-        .map_res(|v: Input| v.parse::<f32>())
+        .map_res(|v: Input| v.parse::<f64>())
         .map(OrderedFloat)
         .context("reading float")
         .parse(input)
@@ -202,11 +224,11 @@ impl SerializeAndDeserialize for Attribute {
     fn serialize<'out>(&self, out: Output<'out>, _: usize) -> error::Result<Output<'out>> {
         match self {
             Attribute::ReaperUid(v) => return v.serialize(out, 0),
-            Attribute::String(v) => write!(out, r#""{v}""#),
+            Attribute::String(v) => return v.serialize(out, 0),
             Attribute::Float(v) => write!(out, "{v}"),
             Attribute::Int(Int(v)) => write!(out, "{}", v),
-            Attribute::UnescapedString(v) => write!(out, r#""{v}""#),
-            Attribute::UNumber(Int(v)) => write!(out, "{}", v),
+            Attribute::UnescapedString(UnescapedString(v)) => write!(out, r#"{v}"#),
+            Attribute::UNumber(Int(v)) => write!(out, "{}:U", v),
         }
         .map_err(|source| write_error!(self, source))
         .map(|_| out)
@@ -216,11 +238,11 @@ impl SerializeAndDeserialize for Attribute {
     fn deserialize(input: Input, _: usize) -> Res<Self> {
         alt((
             |v| ReaperUid::deserialize(v, 0).map(|(out, v)| (out, Self::ReaperUid(v))),
-            parse_string.map(Self::String),
+            |v| EscapedString::deserialize(v, 0).map(|(out, v)| (out, Self::String(v))),
             parse_int.map(Self::Int),
             parse_float.map(Self::Float),
-            parse_unescaped_string.map(Self::String),
             parse_u_number.map(Self::UNumber),
+            parse_unescaped_string.map(Self::UnescapedString),
         ))
         .context(type_name::<Self>())
         .parse(input)
@@ -228,7 +250,7 @@ impl SerializeAndDeserialize for Attribute {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct AttributeName(String);
+pub struct AttributeName(pub String);
 
 impl SerializeAndDeserialize for AttributeName {
     fn serialize<'out>(&self, out: Output<'out>, _indent: usize) -> error::Result<Output<'out>> {
@@ -254,7 +276,7 @@ impl SerializeAndDeserialize for AttributeName {
 
 fn to_indent(indent: usize) -> String {
     let spaces = INDENT_SPACES * indent;
-    (0..spaces).map(|_| "  ").collect::<Vec<_>>().join("")
+    (0..spaces).map(|_| " ").collect::<Vec<_>>().join("")
 }
 
 fn write_indent(out: Output, indent: usize) -> error::Result<Output> {
@@ -265,8 +287,8 @@ fn write_indent(out: Output, indent: usize) -> error::Result<Output> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Line {
-    attribute: AttributeName,
-    values: Vec<Attribute>,
+    pub attribute: AttributeName,
+    pub values: Vec<Attribute>,
 }
 
 impl SerializeAndDeserialize for Line {
@@ -347,8 +369,8 @@ impl SerializeAndDeserialize for Line {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Object {
-    header: Line,
-    values: Vec<Entry>,
+    pub header: Line,
+    pub values: Vec<Entry>,
 }
 
 impl SerializeAndDeserialize for Object {
@@ -363,7 +385,6 @@ impl SerializeAndDeserialize for Object {
         }
         write_indent(out, indent)?;
         write!(out, ">");
-        writeln!(out);
         Ok(out)
     }
 
@@ -439,9 +460,24 @@ pub trait SerializeAndDeserialize: Sized {
     }
 }
 
+pub fn to_string(save_file: Object) -> error::Result<String> {
+    save_file
+        .serialize_inline()
+        .map(|v| [v.as_str(), "\r\n"].join(""))
+}
+
+pub fn from_str(input: &str) -> error::Result<Object> {
+    Object::deserialize(input, 0)
+        .map_err(|report| error::Error::ParseError {
+            report: format!("{report:#?}"),
+        })
+        .map(|(_, object)| object)
+}
+
 #[cfg(test)]
 mod tests {
     use eyre::{eyre, Result, WrapErr};
+    use pretty_assertions::assert_eq;
     use std::error::Error;
     use test_log::test;
 
@@ -654,6 +690,14 @@ mod tests {
     fn test_example_document_parses() -> Result<()> {
         let (_, object) = Object::deserialize(EXAMPLE_1, 0).map_err(|e| eyre!("{e:#?}"))?;
         println!("{object:#?}");
+        Ok(())
+    }
+    #[test]
+    fn test_example_document_reserializes() -> Result<()> {
+        let object = from_str(EXAMPLE_1)?;
+        let serialized = to_string(object.clone())?;
+        std::fs::write("/tmp/test_example_document_reserializes.rpp", &serialized)?;
+        assert_eq!(EXAMPLE_1, &serialized);
         Ok(())
     }
 }
