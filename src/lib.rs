@@ -1,19 +1,12 @@
 use nom::{
     branch::alt,
     bytes::complete::{take_while, take_while1, take_while_m_n},
-    character::complete::alpha0,
-    combinator::{opt, peek},
-    error::VerboseError,
-    multi::{many0, separated_list0, separated_list1},
-    number,
-    sequence::{delimited, separated_pair, tuple},
+    combinator::opt,
+    multi::{many0, separated_list1},
+    sequence::{delimited, tuple},
     IResult, Parser,
 };
-use nom_supreme::{
-    error::ErrorTree,
-    tag::{self, complete::tag},
-    ParserExt,
-};
+use nom_supreme::{error::ErrorTree, tag::complete::tag, ParserExt};
 use ordered_float::OrderedFloat;
 use std::{any::type_name, fmt::Write, iter::once};
 use tracing::instrument;
@@ -27,16 +20,17 @@ macro_rules! location {
 }
 
 pub mod error {
-    use std::num::ParseFloatError;
 
     use thiserror::Error;
     #[derive(Debug, Error)]
     pub enum Error {
         #[error("Writing value failed")]
         WriteError {
+            #[from]
             source: std::fmt::Error,
-            value: String,
         },
+        #[error("Writing whitespace failed")]
+        WriteWhitespaceError,
         #[error("Failed to parse:\n{report}")]
         ParseError { report: String },
     }
@@ -51,19 +45,10 @@ type Float = OrderedFloat<f64>;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ReaperUid(pub String);
 
-macro_rules! write_error {
-    ($self:expr, $source:expr) => {
-        error::Error::WriteError {
-            source: $source,
-            value: format!("{:?}", $self),
-        }
-    };
-}
-
 impl SerializeAndDeserialize for ReaperUid {
     fn serialize<'out>(&self, out: Output<'out>, _: usize) -> error::Result<Output<'out>> {
         write!(out, "{{{}}}", self.0)
-            .map_err(|source| write_error!(self, source))
+            .map_err(Into::into)
             .map(|_| out)
     }
     #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
@@ -94,7 +79,7 @@ impl SerializeAndDeserialize for EscapedString {
             EscapedString::SingleQuote(v) => write!(out, "'{v}'"),
             EscapedString::DoubleQuote(v) => write!(out, "\"{v}\""),
         }
-        .map_err(|source| write_error!(self, source))
+        .map_err(Into::into)
         .map(|_| out)
     }
 
@@ -141,7 +126,7 @@ pub struct AnonymousParameter(pub String);
 impl SerializeAndDeserialize for AnonymousParameter {
     fn serialize<'out>(&self, out: Output<'out>, indent: usize) -> error::Result<Output<'out>> {
         write_indent(out, indent)?;
-        write!(out, "{}", self.0);
+        write!(out, "{}", self.0)?;
         Ok(out)
     }
 
@@ -230,7 +215,7 @@ impl SerializeAndDeserialize for Attribute {
             Attribute::UnescapedString(UnescapedString(v)) => write!(out, r#"{v}"#),
             Attribute::UNumber(Int(v)) => write!(out, "{}:U", v),
         }
-        .map_err(|source| write_error!(self, source))
+        .map_err(Into::into)
         .map(|_| out)
     }
 
@@ -254,9 +239,7 @@ pub struct AttributeName(pub String);
 
 impl SerializeAndDeserialize for AttributeName {
     fn serialize<'out>(&self, out: Output<'out>, _indent: usize) -> error::Result<Output<'out>> {
-        write!(out, "{}", self.0)
-            .map_err(|source| write_error!(self, source))
-            .map(|_| out)
+        write!(out, "{}", self.0).map_err(Into::into).map(|_| out)
     }
 
     #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
@@ -281,7 +264,7 @@ fn to_indent(indent: usize) -> String {
 
 fn write_indent(out: Output, indent: usize) -> error::Result<Output> {
     let indent = to_indent(indent);
-    write!(out, "{indent}").map_err(|source| write_error!(indent, source))?;
+    write!(out, "{indent}")?;
     Ok(out)
 }
 
@@ -298,7 +281,7 @@ impl SerializeAndDeserialize for Line {
             .chain(self.values.iter().map(|v| v.serialize_inline()))
             .collect::<error::Result<Vec<_>>>()
             .map(|segments| segments.join(" "))
-            .and_then(|line| write!(out, "{line}").map_err(|source| write_error!(self, source)))
+            .and_then(|line| write!(out, "{line}").map_err(Into::into))
             .map(|()| out)
     }
 
@@ -376,12 +359,12 @@ pub struct Object {
 impl SerializeAndDeserialize for Object {
     fn serialize<'out>(&self, out: Output<'out>, indent: usize) -> error::Result<Output<'out>> {
         write_indent(out, indent)?;
-        write!(out, "<");
+        write!(out, "<")?;
         self.header.serialize(out, 0)?;
-        writeln!(out, "");
+        writeln!(out, "")?;
         for entry in self.values.iter() {
             entry.serialize(out, indent + 1)?;
-            writeln!(out, "");
+            writeln!(out, "")?;
         }
         write_indent(out, indent)?;
         write!(out, ">");
@@ -476,9 +459,9 @@ pub fn from_str(input: &str) -> error::Result<Object> {
 
 #[cfg(test)]
 mod tests {
-    use eyre::{eyre, Result, WrapErr};
+    use eyre::{eyre, Result};
     use pretty_assertions::assert_eq;
-    use std::error::Error;
+
     use test_log::test;
 
     use super::*;
