@@ -51,7 +51,7 @@ impl SerializeAndDeserialize for ReaperUid {
             .map_err(Into::into)
             .map(|_| out)
     }
-    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
+    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
     fn deserialize(input: Input, indent: usize) -> Res<Self> {
         delimited(
             tag("{"),
@@ -130,7 +130,7 @@ impl SerializeAndDeserialize for AnonymousParameter {
         Ok(out)
     }
 
-    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
+    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
     fn deserialize(input: Input, indent: usize) -> Res<Self> {
         take_while1(|c: char| c.is_alphanumeric() || c == '=')
             .map(|v: Input| Self(v.to_owned()))
@@ -161,7 +161,7 @@ fn parse_newline(input: Input) -> Res<Input> {
         .parse(input)
 }
 
-// #[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
+// #[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
 // fn parse_newline_and_opt_whitespace(input: Input) -> Res<()> {
 //     parse_newlines
 //         .terminated(opt(parse_spaces))
@@ -172,7 +172,7 @@ fn parse_newline(input: Input) -> Res<Input> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnescapedString(pub String);
 
-#[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
+#[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
 fn parse_unescaped_string(input: Input) -> Res<UnescapedString> {
     take_while(|c: char| !c.is_whitespace())
         // .terminated(peek(parse_newline))
@@ -219,7 +219,7 @@ impl SerializeAndDeserialize for Attribute {
         .map(|_| out)
     }
 
-    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
+    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
     fn deserialize(input: Input, _: usize) -> Res<Self> {
         alt((
             |v| ReaperUid::deserialize(v, 0).map(|(out, v)| (out, Self::ReaperUid(v))),
@@ -242,7 +242,7 @@ impl SerializeAndDeserialize for AttributeName {
         write!(out, "{}", self.0).map_err(Into::into).map(|_| out)
     }
 
-    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
+    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
     fn deserialize(input: Input, indent: usize) -> Res<Self> {
         take_while1(|c: char| (c.is_alphabetic() && c.is_uppercase()) || c.is_numeric() || c == '_')
             // .preceded_by(
@@ -285,7 +285,7 @@ impl SerializeAndDeserialize for Line {
             .map(|()| out)
     }
 
-    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
+    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
     fn deserialize(input: Input, indent: usize) -> Res<Self> {
         tuple((
             (|input| AttributeName::deserialize(input, 0)),
@@ -336,7 +336,7 @@ impl SerializeAndDeserialize for Line {
 //         Ok(out)
 //     }
 
-//     #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
+//     #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
 //     fn deserialize(input: Input, indent: usize) -> Res<Self> {
 //         separated_list0(
 //             parse_newline,
@@ -371,7 +371,7 @@ impl SerializeAndDeserialize for Object {
         Ok(out)
     }
 
-    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
+    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
     fn deserialize(input: Input, indent: usize) -> Res<Self> {
         let object_initializer = tag("<")
             .preceded_by(|input| parse_indents(input, indent))
@@ -411,7 +411,7 @@ impl SerializeAndDeserialize for Entry {
         }
     }
 
-    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
+    #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, level = "TRACE")]
     fn deserialize(input: Input, indent: usize) -> Res<Self> {
         alt((
             (|input| Object::deserialize(input, indent))
