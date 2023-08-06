@@ -298,6 +298,12 @@ pub struct Object {
 }
 
 impl Object {
+    pub fn child_object_mut(&mut self, name: &str) -> Option<&mut Object> {
+        self.values
+            .iter_mut()
+            .find_map(|e| e.as_object_mut())
+            .filter(|o| o.header.attribute.as_ref().eq(name))
+    }
     pub fn attributes_mut(&mut self, param: &str) -> Option<&mut Vec<Attribute>> {
         self.values.iter_mut().find_map(|e| {
             e.as_line_mut()
