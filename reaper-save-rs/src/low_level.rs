@@ -51,7 +51,7 @@ impl SerializeAndDeserialize for ReaperUid {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Int(pub i64);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, enum_as_inner::EnumAsInner)]
 pub enum EscapedString {
     SingleQuote(String),
     DoubleQuote(String),
@@ -94,7 +94,7 @@ impl SerializeAndDeserialize for EscapedString {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, enum_as_inner::EnumAsInner)]
 pub enum Attribute {
     ReaperUid(ReaperUid),
     Int(Int),

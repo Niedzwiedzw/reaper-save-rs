@@ -15,5 +15,7 @@ pub enum Error {
         #[from]
         source: crate::low_level::error::Error,
     },
+    #[error("Expected attribute {attribute:?} is missing.")]
+    MissingAttribute { attribute: AttributeName },
 }
 pub type Result<T> = std::result::Result<T, self::Error>;

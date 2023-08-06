@@ -118,6 +118,25 @@ pub struct Track {
     inner: Object,
 }
 
+impl Track {
+    pub fn name(&self) -> Result<String> {
+        const NAME: &str = "NAME";
+        self.inner
+            .values
+            .iter()
+            .find_map(|entry| {
+                entry
+                    .as_line()
+                    .and_then(|line| line.attribute.as_ref().eq(NAME).then(|| &line.values))
+            })
+            .and_then(|values| values.iter().next())
+            .ok_or_else(|| error::Error::MissingAttribute {
+                attribute: AttributeName::new(NAME.to_owned()),
+            })
+            .and_then(|attribute| attribute.serialize_inline().map_err(Into::into))
+    }
+}
+
 #[derive(PartialEq, Eq, Clone, AsMut, AsRef)]
 pub struct Item {
     inner: Object,

@@ -33,8 +33,13 @@ fn main() -> Result<()> {
             .wrap_err("reading file from disk")
             .and_then(|text| ReaperProject::parse_from_str(&text).wrap_err("parsing file"))
             .wrap_err_with(|| format!("validating [{}]", file_path.display()))
-            .map(|_| {
-                info!(?file_path, "OK");
+            .and_then(|project| -> Result<()> {
+                let tracks = project.tracks();
+                info!(?file_path, track_count=%tracks.len(), "OK");
+                for (idx, track) in tracks.iter().enumerate() {
+                    info!("{}. {}", idx + 1, track.name()?);
+                }
+                Ok(())
             }),
     }
 }
