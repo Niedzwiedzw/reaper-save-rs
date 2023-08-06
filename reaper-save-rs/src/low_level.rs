@@ -7,7 +7,7 @@ use nom::{
     IResult, Parser,
 };
 use nom_supreme::{error::ErrorTree, tag::complete::tag, ParserExt};
-use std::{any::type_name, fmt::Write, iter::once};
+use std::{any::type_name, fmt::Write, iter::once, ops::Deref};
 use tracing::instrument;
 
 pub mod error;
@@ -295,6 +295,32 @@ impl SerializeAndDeserialize for Line {
 pub struct Object {
     pub header: Line,
     pub values: Vec<Entry>,
+}
+
+impl Object {
+    pub fn attributes_mut(&mut self, param: &str) -> Option<&mut Vec<Attribute>> {
+        self.values.iter_mut().find_map(|e| {
+            e.as_line_mut()
+                .and_then(|line| line.attribute.as_ref().eq(param).then_some(line))
+                .map(|line| &mut line.values)
+        })
+    }
+
+    pub fn single_attribute_mut(&mut self, param: &str) -> error::Result<&mut Attribute> {
+        self.attributes_mut(param)
+            .ok_or_else(|| self::error::Error::ObjectNoSuchParam {
+                param: param.to_owned(),
+            })
+            .and_then(|params| {
+                let params_count = params.len();
+                params
+                    .first_mut()
+                    .ok_or_else(|| self::error::Error::BadParamCount {
+                        expected: 1,
+                        found: params_count,
+                    })
+            })
+    }
 }
 
 impl SerializeAndDeserialize for Object {
