@@ -1,0 +1,27 @@
+[package]
+name = "reaper-save-rs"
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+categories.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+derive_more.workspace = true
+enum-as-inner.workspace = true
+eyre.workspace = true
+itertools.workspace = true
+nom.workspace = true
+nom-supreme.workspace = true
+ordered-float.workspace = true
+pretty_assertions.workspace = true
+strum.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-error.workspace = true
+
+[dev-dependencies]
+test-log.workspace = true
+tracing-subscriber.workspace = true

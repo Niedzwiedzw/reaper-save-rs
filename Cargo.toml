@@ -1,11 +1,19 @@
-[package]
-name = "reaper-save-rs"
+[workspace]
+resolver = "2"
+members = ["reaper-save-rs", "reaper-save-cli"]
+
+[workspace.package]
 version = "0.1.0"
+license = "MIT"
+repository = "https://github.com/Niedzwiedzw/reaper-save-rs"
+categories = ["wasm"]
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace.dependencies]
+# internal
+reaper-save-rs.path = "reaper-save-rs"
 
-[dependencies]
+# external
 derive_more = "0.99.17"
 enum-as-inner = "0.6.0"
 eyre = "0.6.8"
@@ -17,8 +25,11 @@ pretty_assertions = "1.4.0"
 strum = { version = "0.25.0", features = ["derive"] }
 thiserror = "1.0.44"
 tracing = "0.1.37"
-tracing-error = "0.2.0"
-
-[dev-dependencies]
-test-log = { version = "0.2.12", default-features = false, features = ["trace"] }
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+tracing-error = "0.2.0"
+clap = { version = "4.3.19", features = ["cargo", "derive", "env"] }
+
+# dev dependencies
+test-log = { version = "0.2.12", default-features = false, features = [
+  "trace",
+] }
