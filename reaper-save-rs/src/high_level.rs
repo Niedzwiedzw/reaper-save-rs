@@ -61,6 +61,9 @@ impl ReaperProject {
             .map_err(Into::into)
             .and_then(Self::from_object)
     }
+    pub fn serialize_to_string(self) -> Result<String> {
+        low_level::to_string(self.inner).map_err(Into::into)
+    }
     pub fn tracks(&self) -> Vec<Track> {
         self.inner
             .values
