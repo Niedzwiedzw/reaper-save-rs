@@ -83,11 +83,16 @@ impl SerializeAndDeserialize for ReaperUid {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Int(i64);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Attribute {
     ReaperUid(ReaperUid),
-    Int(i64),
+    Int(Int),
     String(String),
     Float(Float),
+    UnescapedString(String),
+    UNumber(Int),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -125,7 +130,10 @@ fn parse_indents(input: Input, indents: usize) -> Res<Input> {
 }
 
 fn parse_newline(input: Input) -> Res<Input> {
-    tag("\r\n").context("parsing newline").parse(input)
+    tag("\r\n")
+        .or(tag("\n"))
+        .context("parsing newline")
+        .parse(input)
 }
 
 // #[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
@@ -138,7 +146,29 @@ fn parse_newline(input: Input) -> Res<Input> {
 
 #[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
 fn parse_string(input: Input) -> Res<String> {
-    delimited(tag("\""), take_while(|c: char| c != '"'), tag("\""))
+    let contents = |quote: char| take_while(move |c: char| c != quote);
+    let quote = |quote: &'static str| {
+        delimited(
+            tag(quote),
+            contents(
+                quote
+                    .chars()
+                    .next()
+                    .expect("programming error, quotes must be at least one char"),
+            ),
+            tag(quote),
+        )
+    };
+    alt((quote("\""), quote("'")))
+        .map(|v: Input| v.to_owned())
+        .context("reading string")
+        .parse(input)
+}
+
+#[instrument(fields(input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
+fn parse_unescaped_string(input: Input) -> Res<String> {
+    take_while(|c: char| !c.is_whitespace())
+        // .terminated(peek(parse_newline))
         .map(|v: Input| v.to_owned())
         .context("reading string")
         .parse(input)
@@ -153,9 +183,17 @@ fn parse_float(input: Input) -> Res<Float> {
     // .map_err(Into::into).map(OrderedFloat)
 }
 
-fn parse_int(input: Input) -> Res<i64> {
+fn parse_int(input: Input) -> Res<Int> {
     take_while(|v: char| !v.is_whitespace())
-        .map_res(|v: Input| v.parse::<i64>())
+        .map_res(|v: Input| v.parse::<i64>().map(Int))
+        .context("reading integer")
+        .parse(input)
+}
+
+fn parse_u_number(input: Input) -> Res<Int> {
+    take_while(|v: char| v == '-' || v.is_numeric())
+        .terminated(tag(":U"))
+        .map_res(|v: Input| v.parse::<i64>().map(Int))
         .context("reading integer")
         .parse(input)
 }
@@ -166,7 +204,9 @@ impl SerializeAndDeserialize for Attribute {
             Attribute::ReaperUid(v) => return v.serialize(out, 0),
             Attribute::String(v) => write!(out, r#""{v}""#),
             Attribute::Float(v) => write!(out, "{v}"),
-            Attribute::Int(v) => write!(out, "{v}"),
+            Attribute::Int(Int(v)) => write!(out, "{}", v),
+            Attribute::UnescapedString(v) => write!(out, r#""{v}""#),
+            Attribute::UNumber(Int(v)) => write!(out, "{}", v),
         }
         .map_err(|source| write_error!(self, source))
         .map(|_| out)
@@ -179,6 +219,8 @@ impl SerializeAndDeserialize for Attribute {
             parse_string.map(Self::String),
             parse_int.map(Self::Int),
             parse_float.map(Self::Float),
+            parse_unescaped_string.map(Self::String),
+            parse_u_number.map(Self::UNumber),
         ))
         .context(type_name::<Self>())
         .parse(input)
@@ -197,7 +239,13 @@ impl SerializeAndDeserialize for AttributeName {
 
     #[instrument(fields(location=location!(), this=type_name::<Self>(), input=input.chars().take(20).collect::<String>()), ret, err, level = "TRACE")]
     fn deserialize(input: Input, indent: usize) -> Res<Self> {
-        take_while1(|c: char| (c.is_alphabetic() && c.is_uppercase()) || c == '_')
+        take_while1(|c: char| (c.is_alphabetic() && c.is_uppercase()) || c.is_numeric() || c == '_')
+            // .preceded_by(
+            //     peek(take_while_m_n(1, 1, |c: char| {
+            //         c.is_alphabetic() && c.is_uppercase()
+            //     }))
+            //     .context("making sure first character is alphabetic"),
+            // )
             .map(|v: Input| AttributeName(v.to_owned()))
             .context(type_name::<Self>())
             .parse(input)
@@ -325,7 +373,7 @@ impl SerializeAndDeserialize for Object {
             .preceded_by(|input| parse_indents(input, indent))
             .context("object initializer");
 
-        let object_finalizer = (|input| parse_indents(input, indent + 1))
+        let object_finalizer = (|input| parse_indents(input, indent))
             .precedes(tag(">"))
             .context("object terminator");
         let header = (|input| Line::deserialize(input, 0)).context("parsing header");
@@ -402,7 +450,7 @@ mod tests {
 
     #[test]
     fn test_single_param_object() -> Result<()> {
-        let example = "<METRONOME 6 2\r\n  VOL 0.25 0.125\r\n  >";
+        let example = "<METRONOME 6 2\r\n  VOL 0.25 0.125\r\n>";
         Object::deserialize(example, 0).map_err(|e| eyre!("{e:#?}"))?;
 
         Ok(())
@@ -410,14 +458,14 @@ mod tests {
 
     #[test]
     fn test_two_param_object() -> Result<()> {
-        let example = "<METRONOME 6 2\r\n  VOL 0.25 0.125\r\n  FREQ 800 1600 1\r\n  >";
+        let example = "<METRONOME 6 2\r\n  VOL 0.25 0.125\r\n  FREQ 800 1600 1\r\n>";
         Object::deserialize(example, 0).map_err(|e| eyre!("{e:#?}"))?;
 
         Ok(())
     }
     #[test]
     fn test_bigger_object() -> Result<()> {
-        let example = "<METRONOME 6 2\r\n  VOL 0.25 0.125\r\n  FREQ 800 1600 1\r\n  BEATLEN 4\r\n  SAMPLES \"\" \"\"\r\n  PATTERN 2863311530 2863311529\r\n  MULT 1\r\n  >";
+        let example = "<METRONOME 6 2\r\n  VOL 0.25 0.125\r\n  FREQ 800 1600 1\r\n  BEATLEN 4\r\n  SAMPLES \"\" \"\"\r\n  PATTERN 2863311530 2863311529\r\n  MULT 1\r\n>";
         Object::deserialize(example, 0).map_err(|e| eyre!("{e:#?}"))?;
 
         Ok(())
@@ -425,7 +473,19 @@ mod tests {
 
     #[test]
     fn test_line() -> Result<()> {
-        Line::deserialize("GROUPOVERRIDE 0 0 0", 0).map_err(|e| eyre!("{e:#?}"))?;
+        let (empty, _) =
+            Line::deserialize("GROUPOVERRIDE 0 0 0", 0).map_err(|e| eyre!("{e:#?}"))?;
+        assert_eq!(empty, "");
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_auxrecv() -> Result<()> {
+        let (out, _) = Line::deserialize("AUXRECV 0 0 1 0 0 0 0 0 0 -1:U 0 -1 ''", 0)
+            .map_err(|e| eyre!("{e:#?}"))?;
+
+        assert_eq!(out, "");
+
         Ok(())
     }
     #[test]
@@ -435,7 +495,7 @@ mod tests {
     }
     #[test]
     fn test_empty_object() -> Result<()> {
-        Object::deserialize("<EMPTY\r\n  >", 0)
+        Object::deserialize("<EMPTY\r\n>", 0)
             .map_err(|e| eyre!("{e:#?}"))
             .map_err(|e| eyre!("{e:#?}"))?;
         Ok(())
@@ -443,14 +503,14 @@ mod tests {
 
     #[test]
     fn test_string() -> Result<()> {
-        let input = "<REAPER_PROJECT 0.1 \"6.80/linux-x86_64\" 1691227194\r\n  >";
+        let input = "<REAPER_PROJECT 0.1 \"6.80/linux-x86_64\" 1691227194\r\n>";
         Object::deserialize(input, 0).map_err(|e| eyre!("{e:#?}"))?;
         Ok(())
     }
 
     #[test]
     fn test_notes() -> Result<()> {
-        Object::deserialize("<NOTES 0 2\r\n  >", 0).map_err(|e| eyre!("{e:#?}"))?;
+        Object::deserialize("<NOTES 0 2\r\n>", 0).map_err(|e| eyre!("{e:#?}"))?;
         Ok(())
     }
     #[test]
@@ -460,11 +520,136 @@ mod tests {
     }
     #[test]
     fn test_record_cfg() -> Result<()> {
-        Object::deserialize("<RENDER_CFG\r\n  ZXZhdxgAAQ==\r\n  >", 0)
+        Object::deserialize("<RENDER_CFG\r\n  ZXZhdxgAAQ==\r\n>", 0)
             .map_err(|e| eyre!("{e:#?}"))?;
         Ok(())
     }
 
+    #[test]
+    fn test_really_big_item() -> Result<()> {
+        let example = "<ITEM\r\n  POSITION 0\r\n  SNAPOFFS 0\r\n  LENGTH 188.04\r\n  LOOP 1\r\n  ALLTAKES 0\r\n  FADEIN 1 0.01 0 1 0 0 0\r\n  FADEOUT 1 0.01 0 1 0 0 0\r\n  MUTE 0 0\r\n  SEL 1\r\n  IGUID {2F6AD700-840B-EFB6-D384-7F8316E1C1E7}\r\n  IID 21\r\n  NAME barbarah-anne---2023-07-31--20-51-57.mov\r\n  VOLPAN 1 0 1 -1\r\n  SOFFS 0\r\n  PLAYRATE 1 0 0 -1 0 0.0025\r\n  CHANMODE 0\r\n  GUID {A365E92F-3BF8-24E8-1FF4-8FDF30208BCB}\r\n  <SOURCE VIDEO\r\n    FILE \"video-recordings/barbarah-anne---2023-07-31--20-51-57.mov\"\r\n  >\r\n>";
+        Object::deserialize(example, 0).map_err(|e| eyre!("{e:#?}"))?;
+
+        Ok(())
+    }
+    #[test]
+    fn test_nested_object() -> Result<()> {
+        let nested = r#"<ITEM
+  POSITION 0
+  SNAPOFFS 0
+  LENGTH 188.04
+  LOOP 1
+  ALLTAKES 0
+  FADEIN 1 0.01 0 1 0 0 0
+  FADEOUT 1 0.01 0 1 0 0 0
+  MUTE 0 0
+  SEL 1
+  IGUID {2F6AD700-840B-EFB6-D384-7F8316E1C1E7}
+  IID 21
+  NAME barbarah-anne---2023-07-31--20-51-57.mov
+  VOLPAN 1 0 1 -1
+  SOFFS 0
+  PLAYRATE 1 0 0 -1 0 0.0025
+  CHANMODE 0
+  GUID {A365E92F-3BF8-24E8-1FF4-8FDF30208BCB}
+  <SOURCE VIDEO
+    FILE "video-recordings/barbarah-anne---2023-07-31--20-51-57.mov"
+  >
+>"#;
+        Object::deserialize(nested, 0).map_err(|e| eyre!("{e:#?}"))?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_weird_track() -> Result<()> {
+        let example = r#"<TRACK {7E81B987-2285-6CDD-D836-6728BF78773C}
+  NAME PLATE
+  PEAKCOL 16576
+  BEAT -1
+  AUTOMODE 0
+  VOLPAN 2.15306599269332 0 -1 -1 1
+  MUTESOLO 0 0 0
+  IPHASE 0
+  PLAYOFFS 0 1
+  ISBUS 0 0
+  BUSCOMP 0 0 0 0 0
+  SHOWINMIX 1 0.558065 0.5 1 0.5 0 0 0
+  SEL 0
+  REC 0 0 0 0 0 0 0 0
+  VU 2
+  TRACKHEIGHT 94 0 0 0 0 0
+  INQ 0 0 0 0.5 100 0 0 100
+  NCHAN 2
+  FX 1
+  TRACKID {7E81B987-2285-6CDD-D836-6728BF78773C}
+  PERF 0
+  AUXRECV 0 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 1 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 2 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 3 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 4 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 5 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 6 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 7 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 8 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 9 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 11 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 12 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 13 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 14 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 15 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 16 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 17 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 18 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 19 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  AUXRECV 20 0 1 0 0 0 0 0 0 -1:U 0 -1 ''
+  MIDIOUT -1
+  MAINSEND 1 0
+  <FXCHAIN
+    WNDRECT 1952 77 943 422
+    SHOW 0
+    LASTSEL 0
+    DOCKED 0
+    BYPASS 0 0 0
+    <VST "VST: Dragonfly Plate Reverb (Michael Willis)" DragonflyPlateReverb-vst.so 0 "" 1684434995<56535464667033647261676F6E666C79> ""
+      M3BmZO5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAkgAAAAEAAAAAABAA
+      cHJlc2V0AENsZWFyIFBsYXRlAABkcnlfbGV2ZWwAMABlYXJseV9sZXZlbAAxMDAAYWxnb3JpdGhtADEAd2lkdGgAMTAwAHByZWRlbGF5ADAAZGVjYXkAMC40MDAwMDAw
+      MDU5NgBsb3dfY3V0ADIwMABoaWdoX2N1dAAxNjAwMABlYXJseV9kYW1wADEzMDAwAAA=
+      AERlZmF1bHQAEAAAAA==
+    >
+    PRESETNAME Default
+    FLOATPOS 0 0 0 0
+    FXID {51DB3976-E446-E2A5-4F8A-00667D8BE496}
+    WAK 0 0
+  >
+>"#;
+
+        let (out, _) = Object::deserialize(example, 0).map_err(|e| eyre!("{e:#?}"))?;
+        assert_eq!(out, "");
+        Ok(())
+    }
+
+    #[test]
+    fn test_vst() -> Result<()> {
+        let example = r#"<VST "VST: Dragonfly Plate Reverb (Michael Willis)" DragonflyPlateReverb-vst.so 0 "" 1684434995<56535464667033647261676F6E666C79> ""
+  M3BmZO5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAkgAAAAEAAAAAABAA
+  cHJlc2V0AENsZWFyIFBsYXRlAABkcnlfbGV2ZWwAMABlYXJseV9sZXZlbAAxMDAAYWxnb3JpdGhtADEAd2lkdGgAMTAwAHByZWRlbGF5ADAAZGVjYXkAMC40MDAwMDAw
+  MDU5NgBsb3dfY3V0ADIwMABoaWdoX2N1dAAxNjAwMABlYXJseV9kYW1wADEzMDAwAAA=
+  AERlZmF1bHQAEAAAAA==
+>"#;
+
+        assert_eq!(Object::deserialize(example, 0)?.0, "");
+        Ok(())
+    }
+    #[test]
+    fn test_up_to_render_1x() -> Result<()> {
+        let example = r#"<REAPER_PROJECT 0.1 "6.80/linux-x86_64" 1691227194
+  RENDER_1X 0
+>"#;
+        Object::deserialize(example, 0).map_err(|e| eyre!("{e:#?}"))?;
+        Ok(())
+    }
     #[test]
     fn test_example_document_parses() -> Result<()> {
         let (_, object) = Object::deserialize(EXAMPLE_1, 0).map_err(|e| eyre!("{e:#?}"))?;
