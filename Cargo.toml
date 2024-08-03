@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["reaper-save-rs", "reaper-save-cli"]
+members = ["reaper-save-rs", "reaper-save-cli", "reaper-track-importer"]
 
 [workspace.package]
 version = "0.1.0"

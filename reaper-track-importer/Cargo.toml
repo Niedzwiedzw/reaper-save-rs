@@ -1,0 +1,17 @@
+[package]
+name = "reaper-track-importer"
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+categories.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap.workspace = true
+eyre.workspace = true
+inquire = "0.7.5"
+reaper-save-rs.workspace = true
+rfd = "0.14.1"
+tap = "1.0.1"
+tracing.workspace = true
+tracing-subscriber.workspace = true

@@ -74,7 +74,10 @@ impl ReaperProject {
             .collect()
     }
 
-    pub fn modify_tracks<F: Fn(Vec<Track>) -> Vec<Track>>(&mut self, modifier: F) -> Result<()> {
+    pub fn modify_tracks<F: FnOnce(Vec<Track>) -> Vec<Track>>(
+        &mut self,
+        modifier: F,
+    ) -> Result<()> {
         let value_index = || self.inner.values.iter().enumerate();
         let original_index_start = value_index()
             .find_map(|(index, entry)| entry.as_object().map(|_| index))
