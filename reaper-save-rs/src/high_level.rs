@@ -1,27 +1,62 @@
-use crate::low_level::{self, AttributeName, Entry, Object, SerializeAndDeserialize};
+use crate::low_level::{
+    self, AttributeKind, AttributeName, Entry, Line, Object, SerializeAndDeserialize,
+};
 use derive_more::{AsMut, AsRef};
+use tap::prelude::*;
 
 pub mod error;
 use error::Result;
 
 fn assert_attribute_name(object: Object, attribute_name: &str) -> Result<Object> {
-    object
-        .header
-        .attribute
-        .as_ref()
-        .eq(attribute_name)
+    matches_attribute_name_ref(&object, attribute_name)
         .then(|| object.clone())
         .ok_or_else(|| error::Error::InvalidObject {
             expected: AttributeName::new(attribute_name.to_owned()),
             got: object.header.attribute.clone(),
         })
 }
+fn matches_attribute_name_ref(object: &Object, attribute_name: &str) -> bool {
+    object.header.attribute.as_ref().eq(attribute_name)
+}
+
+thread_local! {
+    pub static DUMMY_OBJECT: Object = {
+        Object {
+            header: Line {attribute: AttributeName::new("DUMMY".into()), values: vec![]},
+            values: vec![],
+        }
+    };
+}
 
 pub trait ObjectWrapper: Sized {
     const ATTRIBUTE_NAME: &'static str;
+    fn destroy(self) -> Object;
     fn from_object_raw(inner: Object) -> Self;
     fn from_object(inner: Object) -> error::Result<Self> {
         assert_attribute_name(inner, Self::ATTRIBUTE_NAME).map(Self::from_object_raw)
+    }
+    fn matches_object(inner: &Object) -> bool {
+        matches_attribute_name_ref(inner, Self::ATTRIBUTE_NAME)
+    }
+    fn with_as_object_mut<T, F: FnOnce(&mut Self) -> T>(
+        inner: &mut Object,
+        with_as_object_mut: F,
+    ) -> error::Result<T> {
+        DUMMY_OBJECT.with(|dummy_object| {
+            std::mem::replace(inner, dummy_object.clone()).pipe(|original| match Self::from_object(
+                original.clone(),
+            ) {
+                Ok(mut valid) => with_as_object_mut(&mut valid)
+                    .tap(|_| {
+                        let _ = std::mem::replace(inner, valid.destroy());
+                    })
+                    .pipe(Ok),
+                Err(message) => {
+                    let _ = std::mem::replace(inner, original);
+                    Err(message)
+                }
+            })
+        })
     }
 }
 
@@ -47,6 +82,10 @@ impl ObjectWrapper for ReaperProject {
 
     fn from_object_raw(inner: Object) -> Self {
         Self { inner }
+    }
+
+    fn destroy(self) -> Object {
+        self.inner
     }
 }
 
@@ -117,6 +156,31 @@ impl ObjectWrapper for Track {
     fn from_object_raw(inner: Object) -> Self {
         Self { inner }
     }
+    fn destroy(self) -> Object {
+        self.inner
+    }
+}
+
+impl ObjectWrapper for Item {
+    const ATTRIBUTE_NAME: &'static str = "ITEM";
+
+    fn from_object_raw(inner: Object) -> Self {
+        Self { inner }
+    }
+    fn destroy(self) -> Object {
+        self.inner
+    }
+}
+
+impl ObjectWrapper for SourceWave {
+    const ATTRIBUTE_NAME: &'static str = "SOURCE";
+
+    fn from_object_raw(inner: Object) -> Self {
+        Self { inner }
+    }
+    fn destroy(self) -> Object {
+        self.inner
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, AsMut, AsRef)]
@@ -125,6 +189,24 @@ pub struct Track {
 }
 
 impl Track {
+    pub fn modify_items<T>(&mut self, mut modify_items: impl FnMut(&mut Item) -> T) -> Vec<T> {
+        self.inner
+            .values
+            .iter_mut()
+            .filter_map(|e| e.as_object_mut())
+            .filter(|object| Item::matches_object(object))
+            .map(|o| Item::with_as_object_mut(o, &mut modify_items).expect("checked above"))
+            .collect()
+    }
+    pub fn items(&self) -> Vec<Item> {
+        self.inner
+            .values
+            .iter()
+            .filter_map(|e| e.as_object())
+            .cloned()
+            .filter_map(|item| Item::from_object(item).ok())
+            .collect()
+    }
     pub fn name(&self) -> Result<String> {
         const NAME: &str = "NAME";
         self.inner
@@ -146,6 +228,60 @@ impl Track {
 #[derive(PartialEq, Eq, Clone, AsMut, AsRef)]
 pub struct Item {
     inner: Object,
+}
+#[derive(PartialEq, Eq, Clone, AsMut, AsRef)]
+pub struct SourceWave {
+    inner: Object,
+}
+
+impl SourceWave {
+    pub fn file_mut(&mut self) -> Option<Result<&mut String>> {
+        self.inner.single_attribute_mut("FILE").map(|out| {
+            out.map_err(From::from).and_then(|out| match out {
+                low_level::Attribute::String(s) => Ok(s.as_mut()),
+                other => Err(error::Error::InvalidAttributeType {
+                    field: "FILE",
+                    expected: AttributeKind::String,
+                    found: AttributeKind::from(&*other),
+                }),
+            })
+        })
+    }
+    pub fn file(&self) -> Option<Result<&str>> {
+        self.inner.single_attribute("FILE").map(|out| match out {
+            low_level::Attribute::String(s) => Ok(s.as_ref().as_str()),
+            other => Err(error::Error::InvalidAttributeType {
+                field: "FILE",
+                expected: AttributeKind::String,
+                found: AttributeKind::from(other),
+            }),
+        })
+    }
+}
+
+impl Item {
+    pub fn with_source_waves_mut<T, F: FnOnce(&mut SourceWave) -> T + Copy>(
+        &mut self,
+        with_source_wave_mut: F,
+    ) -> Vec<T> {
+        self.inner
+            .values
+            .iter_mut()
+            .filter_map(|e| e.as_object_mut())
+            .filter(|e| SourceWave::matches_object(e))
+            .map(move |o| {
+                SourceWave::with_as_object_mut(o, with_source_wave_mut).expect("validated above")
+            })
+            .collect()
+    }
+
+    pub fn source_wave(&self) -> Option<SourceWave> {
+        self.inner
+            .values
+            .iter()
+            .filter_map(|e| e.as_object())
+            .find_map(|o| SourceWave::from_object(o.clone()).ok())
+    }
 }
 
 #[cfg(test)]

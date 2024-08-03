@@ -118,7 +118,8 @@ impl SerializeAndDeserialize for ReaperString {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, enum_as_inner::EnumAsInner)]
+#[derive(Debug, Clone, PartialEq, Eq, enum_as_inner::EnumAsInner, enum_kinds::EnumKind)]
+#[enum_kind(AttributeKind)]
 pub enum Attribute {
     ReaperUid(ReaperUid),
     Int(Int),
@@ -377,6 +378,19 @@ impl Object {
             .find_map(|e| e.as_object_mut())
             .filter(|o| o.header.attribute.as_ref().eq(name))
     }
+    pub fn attributes(&self, param: &str) -> Option<&Vec<Attribute>> {
+        self.values.iter().find_map(|e| {
+            e.as_line()
+                .and_then(|line| line.attribute.as_ref().eq(param).then_some(line))
+                .map(|line| &line.values)
+        })
+    }
+    pub fn single_attribute(&self, param: &str) -> Option<&Attribute> {
+        self.attributes(param)
+            .and_then(|params| {
+                params.first()
+            })
+    }
     pub fn attributes_mut(&mut self, param: &str) -> Option<&mut Vec<Attribute>> {
         self.values.iter_mut().find_map(|e| {
             e.as_line_mut()
@@ -385,12 +399,9 @@ impl Object {
         })
     }
 
-    pub fn single_attribute_mut(&mut self, param: &str) -> error::Result<&mut Attribute> {
+    pub fn single_attribute_mut(&mut self, param: &str) -> Option<error::Result<&mut Attribute>> {
         self.attributes_mut(param)
-            .ok_or_else(|| self::error::Error::ObjectNoSuchParam {
-                param: param.to_owned(),
-            })
-            .and_then(|params| {
+            .map(|params| {
                 let params_count = params.len();
                 params.first_mut().ok_or(self::error::Error::BadParamCount {
                     expected: 1,
